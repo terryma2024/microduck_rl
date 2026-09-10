@@ -135,3 +135,20 @@ def test_standup_env_is_also_guarded():
     assert cfg.terminations["nan_state"].params.get("sensor_names"), (
         "standup nan_state no longer watches contact forces"
     )
+
+
+def test_sitstand_env_is_also_guarded():
+    """Sit/stand contacts must not leak non-finite sensor values to the critic."""
+    from mjlab_microduck.tasks.microduck_sitstand_env_cfg import (
+        make_microduck_sitstand_env_cfg,
+    )
+
+    cfg = make_microduck_sitstand_env_cfg(rough=True)
+    terms = cfg.observations["critic"].terms
+    for name in ("foot_contact_forces", "foot_air_time"):
+        assert terms[name].func.__name__.endswith("_safe"), (
+            f"sitstand critic/{name} lost its NaN guard"
+        )
+    assert cfg.terminations["nan_state"].params.get("sensor_names"), (
+        "sitstand nan_state no longer watches contact forces"
+    )
